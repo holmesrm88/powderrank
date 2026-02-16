@@ -4,11 +4,12 @@ class WeatherService {
     this.inMemoryCache = {};
   }
 
-  async fetchBatchWeather(resorts, year) {
+  async fetchBatchWeather(resorts, year, startMM, startDD, endMM, endDD) {
     const lats = resorts.map(r => r.latitude).join(',');
     const lngs = resorts.map(r => r.longitude).join(',');
-    const startDate = `${year}-02-07`;
-    const endDate = `${year}-02-14`;
+    const startDate = `${year}-${startMM}-${startDD}`;
+    const endYear = parseInt(endMM) < parseInt(startMM) ? year + 1 : year;
+    const endDate = `${endYear}-${endMM}-${endDD}`;
 
     const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lats}&longitude=${lngs}&start_date=${startDate}&end_date=${endDate}&daily=snowfall_sum,precipitation_sum,temperature_2m_max,temperature_2m_min&timezone=America/Denver`;
 
@@ -21,7 +22,6 @@ class WeatherService {
     const results = {};
 
     if (resorts.length === 1) {
-      // Single location: response is a single object
       results[resorts[0].id] = {
         dates: data.daily.time,
         snowfall: data.daily.snowfall_sum,
@@ -30,7 +30,6 @@ class WeatherService {
         tempMin: data.daily.temperature_2m_min
       };
     } else {
-      // Multiple locations: response is an array
       const locations = Array.isArray(data) ? data : [data];
       for (let i = 0; i < resorts.length; i++) {
         const loc = locations[i];
@@ -49,37 +48,34 @@ class WeatherService {
     return results;
   }
 
-  async fetchAllHistoricalData(allResorts, onProgress) {
+  async fetchAllHistoricalData(allResorts, startMM, startDD, endMM, endDD, onProgress) {
     const startYear = 2000;
     const endYear = 2024;
     const years = [];
     for (let y = startYear; y <= endYear; y++) years.push(y);
 
-    const allData = {}; // resortId -> { year -> data }
+    const weekStart = `${startMM}-${startDD}`;
+    const allData = {};
     for (const r of allResorts) allData[r.id] = {};
 
     const totalSteps = years.length * Math.ceil(allResorts.length / 10);
     let currentStep = 0;
 
     for (const year of years) {
-      // Batch resorts into groups of 10
       for (let i = 0; i < allResorts.length; i += 10) {
         const batch = allResorts.slice(i, i + 10);
         currentStep++;
 
-        // Check which resorts in batch need fetching
         const uncached = [];
         for (const resort of batch) {
-          const cacheKey = `${resort.id}_${year}`;
+          const cacheKey = `${resort.id}_${year}_${weekStart}`;
 
-          // Check in-memory first
           if (this.inMemoryCache[cacheKey]) {
             allData[resort.id][year] = this.inMemoryCache[cacheKey];
             continue;
           }
 
-          // Check DB
-          const dbCached = await this.db.getWeatherCache(resort.id, year);
+          const dbCached = await this.db.getWeatherCache(resort.id, year, weekStart);
           if (dbCached) {
             allData[resort.id][year] = dbCached;
             this.inMemoryCache[cacheKey] = dbCached;
@@ -95,21 +91,19 @@ class WeatherService {
           }
 
           try {
-            const batchResults = await this.fetchBatchWeather(uncached, year);
+            const batchResults = await this.fetchBatchWeather(uncached, year, startMM, startDD, endMM, endDD);
             for (const [resortId, data] of Object.entries(batchResults)) {
               allData[resortId][year] = data;
-              this.inMemoryCache[`${resortId}_${year}`] = data;
-              await this.db.setWeatherCache(resortId, year, data);
+              this.inMemoryCache[`${resortId}_${year}_${weekStart}`] = data;
+              await this.db.setWeatherCache(resortId, year, weekStart, data);
             }
           } catch (err) {
             console.error(`Error fetching batch for year ${year}:`, err.message);
-            // Fill with null data so we can continue
             for (const resort of uncached) {
               allData[resort.id][year] = null;
             }
           }
 
-          // Rate limiting delay
           await new Promise(resolve => setTimeout(resolve, 100));
         } else {
           if (onProgress) {

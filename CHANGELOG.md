@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.1.0 — 2026-02-16
+
+### Added
+- Week picker dropdown with ~23 preset weeks (Nov 1 through Apr 5)
+- Each week's data fetched and cached independently in PostgreSQL
+- `/api/weeks` endpoint returning all weeks with cached/uncached status
+- Background pre-fetch on startup: fetches default week first, then remaining weeks sequentially
+- Client polls cached weeks list and updates dropdown labels in real time
+- Dockerized deployment: multi-stage Dockerfile and docker-compose.yml with Postgres
+- Server test suite (Jest + supertest): 37 tests across 4 suites
+  - `weeks.test.js` — week generation and year-boundary date handling
+  - `RankingService.test.js` — scoring, normalization, ranking, and edge cases
+  - `WeatherService.test.js` — mocked fetch, URL construction, caching layers
+  - `routes.test.js` — API integration tests for all endpoints
+
+### Changed
+- Server in-memory state (`cachedRankings`, `fetchProgress`) converted from single values to Maps keyed by week
+- All API endpoints (`/api/rankings`, `/api/rankings/progress`, `/api/resort/:id`) accept `?week=MM-DD` query param
+- DB schema: `weather_cache` and `resort_rankings` tables gain `week_start` column (with ALTER TABLE migration for existing data)
+- `WeatherService.fetchBatchWeather` and `fetchAllHistoricalData` parameterized for arbitrary date ranges
+- Resort detail labels, chart title, and rental links update dynamically based on selected week
+- Static file serving switches between dev and production paths based on `NODE_ENV`
+- Refactored `server.js` into `app.js` (Express app + logic) and `server.js` (entry point) for testability
+- Extracted week utilities (`generateWeeks`, `getWeekEnd`, `parseWeekDates`) into `server/utils/weeks.js`
+
+### Fixed
+- Year-boundary bug: weeks crossing Dec→Jan (e.g. Dec 27-Jan 3) now correctly use `year + 1` for the end date
+
 ## 1.0.0 — 2026-02-15
 
 ### Added

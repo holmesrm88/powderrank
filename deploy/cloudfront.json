@@ -1,0 +1,167 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "PowderRank CloudFront distribution with caching policies",
+
+  "Parameters": {
+    "OriginDomain": {
+      "Type": "String",
+      "Description": "EC2 public DNS or Elastic IP (e.g. ec2-12-34-56-78.compute-1.amazonaws.com)"
+    },
+    "DomainName": {
+      "Type": "String",
+      "Default": "",
+      "Description": "Optional custom domain (e.g. powderrank.com). Leave blank to use CloudFront default domain."
+    },
+    "CertificateArn": {
+      "Type": "String",
+      "Default": "",
+      "Description": "Optional ACM certificate ARN for HTTPS on custom domain. Must be in us-east-1."
+    }
+  },
+
+  "Conditions": {
+    "HasCustomDomain": { "Fn::Not": [{ "Fn::Equals": [{ "Ref": "DomainName" }, ""] }] },
+    "HasCertificate": { "Fn::Not": [{ "Fn::Equals": [{ "Ref": "CertificateArn" }, ""] }] }
+  },
+
+  "Resources": {
+    "StaticCachePolicy": {
+      "Type": "AWS::CloudFront::CachePolicy",
+      "Properties": {
+        "CachePolicyConfig": {
+          "Name": "PowderRank-Static",
+          "Comment": "Long cache for immutable static assets (JS, CSS, images)",
+          "DefaultTTL": 2592000,
+          "MaxTTL": 31536000,
+          "MinTTL": 2592000,
+          "ParametersInCacheKeyAndForwardedToOrigin": {
+            "CookiesConfig": { "CookieBehavior": "none" },
+            "HeadersConfig": { "HeaderBehavior": "none" },
+            "QueryStringsConfig": { "QueryStringBehavior": "none" },
+            "EnableAcceptEncodingGzip": true,
+            "EnableAcceptEncodingBrotli": true
+          }
+        }
+      }
+    },
+
+    "ApiCachePolicy": {
+      "Type": "AWS::CloudFront::CachePolicy",
+      "Properties": {
+        "CachePolicyConfig": {
+          "Name": "PowderRank-API",
+          "Comment": "Short cache for API responses, vary by week query param",
+          "DefaultTTL": 300,
+          "MaxTTL": 600,
+          "MinTTL": 0,
+          "ParametersInCacheKeyAndForwardedToOrigin": {
+            "CookiesConfig": { "CookieBehavior": "none" },
+            "HeadersConfig": { "HeaderBehavior": "none" },
+            "QueryStringsConfig": {
+              "QueryStringBehavior": "whitelist",
+              "QueryStrings": ["week"]
+            },
+            "EnableAcceptEncodingGzip": true,
+            "EnableAcceptEncodingBrotli": true
+          }
+        }
+      }
+    },
+
+    "Distribution": {
+      "Type": "AWS::CloudFront::Distribution",
+      "Properties": {
+        "DistributionConfig": {
+          "Enabled": true,
+          "Comment": "PowderRank CDN",
+          "DefaultRootObject": "",
+          "HttpVersion": "http2and3",
+          "PriceClass": "PriceClass_100",
+
+          "Origins": [
+            {
+              "Id": "ec2-origin",
+              "DomainName": { "Ref": "OriginDomain" },
+              "CustomOriginConfig": {
+                "HTTPPort": 80,
+                "OriginProtocolPolicy": "http-only"
+              }
+            }
+          ],
+
+          "DefaultCacheBehavior": {
+            "TargetOriginId": "ec2-origin",
+            "ViewerProtocolPolicy": "redirect-to-https",
+            "CachePolicyId": { "Ref": "StaticCachePolicy" },
+            "Compress": true,
+            "AllowedMethods": ["GET", "HEAD"],
+            "CachedMethods": ["GET", "HEAD"]
+          },
+
+          "CacheBehaviors": [
+            {
+              "PathPattern": "/api/rankings*",
+              "TargetOriginId": "ec2-origin",
+              "ViewerProtocolPolicy": "redirect-to-https",
+              "CachePolicyId": { "Ref": "ApiCachePolicy" },
+              "Compress": true,
+              "AllowedMethods": ["GET", "HEAD"],
+              "CachedMethods": ["GET", "HEAD"]
+            },
+            {
+              "PathPattern": "/api/weeks",
+              "TargetOriginId": "ec2-origin",
+              "ViewerProtocolPolicy": "redirect-to-https",
+              "CachePolicyId": { "Ref": "ApiCachePolicy" },
+              "Compress": true,
+              "AllowedMethods": ["GET", "HEAD"],
+              "CachedMethods": ["GET", "HEAD"]
+            },
+            {
+              "PathPattern": "/api/*",
+              "TargetOriginId": "ec2-origin",
+              "ViewerProtocolPolicy": "redirect-to-https",
+              "CachePolicyId": { "Ref": "ApiCachePolicy" },
+              "Compress": true,
+              "AllowedMethods": ["GET", "HEAD"],
+              "CachedMethods": ["GET", "HEAD"]
+            }
+          ],
+
+          "Aliases": {
+            "Fn::If": [
+              "HasCustomDomain",
+              [{ "Ref": "DomainName" }],
+              { "Ref": "AWS::NoValue" }
+            ]
+          },
+
+          "ViewerCertificate": {
+            "Fn::If": [
+              "HasCertificate",
+              {
+                "AcmCertificateArn": { "Ref": "CertificateArn" },
+                "SslSupportMethod": "sni-only",
+                "MinimumProtocolVersion": "TLSv1.2_2021"
+              },
+              {
+                "CloudFrontDefaultCertificate": true
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+
+  "Outputs": {
+    "CloudFrontDomain": {
+      "Description": "CloudFront distribution URL — point your browser here",
+      "Value": { "Fn::GetAtt": ["Distribution", "DomainName"] }
+    },
+    "DistributionId": {
+      "Description": "Distribution ID — use for cache invalidation",
+      "Value": { "Ref": "Distribution" }
+    }
+  }
+}

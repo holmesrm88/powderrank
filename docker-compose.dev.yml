@@ -1,0 +1,10 @@
+# Local development override — skips Nginx, exposes app directly
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+services:
+  nginx:
+    profiles:
+      - disabled
+
+  app:
+    ports:
+      - "3003:3003"

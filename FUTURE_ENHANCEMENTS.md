@@ -76,9 +76,10 @@ Use a RapidAPI Airbnb provider since they're the most accessible. VRBO requires 
 
 ## Other Ideas
 
-### Custom Date Range
-- Let users pick any week, not just Feb 7-14
-- Requires re-fetching weather data for the new range
+### Custom Date Range (Partially Implemented)
+- **Done**: Week picker dropdown with ~22 preset weeks (Nov 1 through Apr 5)
+- **Future**: Full custom start/end date picker (arbitrary date ranges, not just 7-day presets)
+- Could allow users to pick exact check-in and check-out dates for any length of stay
 
 ### Snow Forecast Integration
 - Show current season snowfall + upcoming forecast alongside historical data

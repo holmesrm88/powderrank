@@ -1,7 +1,100 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
-function ResortDetail({ resort, onBack }) {
+const AIRBNB_HOT_TUB_ID = 25;
+const AMENITY_OPTIONS = [
+  { id: 'hot_tub', label: 'Hot Tub', airbnbId: AIRBNB_HOT_TUB_ID, vrboFilter: 'HOT_TUB' },
+  { id: 'pool', label: 'Pool', airbnbId: 7, vrboFilter: 'POOL' },
+  { id: 'fireplace', label: 'Fireplace', airbnbId: 27, vrboFilter: 'FIREPLACE' },
+  { id: 'wifi', label: 'WiFi', airbnbId: 4, vrboFilter: 'WIFI' },
+];
+
+function buildAirbnbUrl(resort, guests, checkin, checkout, amenities) {
+  const location = encodeURIComponent(`${resort.city}, ${resort.state}`);
+  const params = new URLSearchParams();
+  params.set('checkin', checkin);
+  params.set('checkout', checkout);
+  params.set('adults', guests.toString());
+  let url = `https://www.airbnb.com/s/${location}/homes?${params.toString()}`;
+  for (const am of amenities) {
+    const opt = AMENITY_OPTIONS.find(a => a.id === am);
+    if (opt) url += `&amenities[]=${opt.airbnbId}`;
+  }
+  return url;
+}
+
+function buildVrboUrl(resort, guests, checkin, checkout, amenities) {
+  const location = encodeURIComponent(`${resort.city}, ${resort.state}`);
+  const params = new URLSearchParams();
+  params.set('destination', `${resort.city}, ${resort.state}`);
+  params.set('startDate', checkin);
+  params.set('d1', checkin);
+  params.set('endDate', checkout);
+  params.set('d2', checkout);
+  params.set('adults', guests.toString());
+  params.set('latLong', `${resort.latitude},${resort.longitude}`);
+  params.set('sort', 'RECOMMENDED');
+  let url = `https://www.vrbo.com/search?${params.toString()}`;
+  for (const am of amenities) {
+    const opt = AMENITY_OPTIONS.find(a => a.id === am);
+    if (opt) url += `&amenities=${opt.vrboFilter}`;
+  }
+  return url;
+}
+
+function getWeekLabel(weekStart) {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const [mm, dd] = weekStart.split('-').map(Number);
+  const start = new Date(2024, mm - 1, dd);
+  const end = new Date(2024, mm - 1, dd + 7);
+  const startLabel = `${months[start.getMonth()]} ${start.getDate()}`;
+  const endLabel = start.getMonth() !== end.getMonth()
+    ? `${months[end.getMonth()]} ${end.getDate()}`
+    : `${end.getDate()}`;
+  return `${startLabel}-${endLabel}`;
+}
+
+function getNextTripDates(weekStart) {
+  const [mm, dd] = weekStart.split('-').map(Number);
+  const now = new Date();
+  let year = now.getFullYear();
+
+  // Build the end date from the week
+  const endDate = new Date(year, mm - 1, dd + 7);
+
+  // If we're past the end of this week's window, use next year
+  if (now > endDate) {
+    year++;
+  }
+
+  const checkin = `${year}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+  const end = new Date(year, mm - 1, dd + 7);
+  const checkout = `${year}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`;
+
+  return { checkin, checkout, year };
+}
+
+function ResortDetail({ resort, onBack, week = '02-07' }) {
   const [showTable, setShowTable] = useState(false);
+  const [guests, setGuests] = useState(4);
+  const [selectedAmenities, setSelectedAmenities] = useState([]);
+
+  const weekLabel = useMemo(() => getWeekLabel(week), [week]);
+  const { checkin, checkout, year: tripYear } = useMemo(() => getNextTripDates(week), [week]);
+
+  const toggleAmenity = (id) => {
+    setSelectedAmenities(prev =>
+      prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
+    );
+  };
+
+  const airbnbUrl = useMemo(
+    () => buildAirbnbUrl(resort, guests, checkin, checkout, selectedAmenities),
+    [resort, guests, checkin, checkout, selectedAmenities]
+  );
+  const vrboUrl = useMemo(
+    () => buildVrboUrl(resort, guests, checkin, checkout, selectedAmenities),
+    [resort, guests, checkin, checkout, selectedAmenities]
+  );
 
   const yearlyData = resort.yearlyData || [];
   const maxSnowfall = Math.max(...yearlyData.map(y => y.snowfall), 1);
@@ -32,7 +125,7 @@ function ResortDetail({ resort, onBack }) {
       <div className="metrics-grid">
         <div className="metric-card">
           <span className="metric-value snowfall-value">{resort.avgSnowfall}"</span>
-          <span className="metric-label">Avg Feb 7-14 Snowfall</span>
+          <span className="metric-label">Avg {weekLabel} Snowfall</span>
         </div>
         <div className="metric-card">
           <span className="metric-value">{resort.consistency}%</span>
@@ -57,7 +150,7 @@ function ResortDetail({ resort, onBack }) {
       </div>
 
       <div className="chart-section">
-        <h3>Feb 7-14 Snowfall by Year (inches)</h3>
+        <h3>{weekLabel} Snowfall by Year (inches)</h3>
         <div className="bar-chart">
           <svg width={yearlyData.length * (barWidth + 4) + 40} height={chartHeight + 40} className="chart-svg">
             {yearlyData.map((y, i) => {
@@ -110,6 +203,45 @@ function ResortDetail({ resort, onBack }) {
           </div>
         </div>
       )}
+
+      <div className="rentals-section">
+        <h3>Find Rentals Near {resort.name}</h3>
+        <p className="rentals-subtitle">{weekLabel}, {tripYear} &middot; Opens Airbnb / VRBO with your filters pre-set</p>
+
+        <div className="rentals-controls">
+          <div className="rental-control">
+            <label>Guests</label>
+            <select value={guests} onChange={e => setGuests(Number(e.target.value))}>
+              {Array.from({ length: 15 }, (_, i) => i + 2).map(n => (
+                <option key={n} value={n}>{n} guests</option>
+              ))}
+            </select>
+          </div>
+          <div className="rental-control">
+            <label>Amenities (optional)</label>
+            <div className="amenity-toggles">
+              {AMENITY_OPTIONS.map(am => (
+                <button
+                  key={am.id}
+                  className={`amenity-btn ${selectedAmenities.includes(am.id) ? 'active' : ''}`}
+                  onClick={() => toggleAmenity(am.id)}
+                >
+                  {am.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="rental-links">
+          <a href={airbnbUrl} target="_blank" rel="noopener noreferrer" className="rental-link airbnb">
+            Search Airbnb
+          </a>
+          <a href={vrboUrl} target="_blank" rel="noopener noreferrer" className="rental-link vrbo">
+            Search VRBO
+          </a>
+        </div>
+      </div>
 
       <div className="yearly-section">
         <button className="toggle-table" onClick={() => setShowTable(!showTable)}>
