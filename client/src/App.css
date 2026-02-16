@@ -1,0 +1,649 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f0f4f8;
+  color: #1a2332;
+  line-height: 1.5;
+}
+
+.app {
+  min-height: 100vh;
+}
+
+/* Header */
+.app-header {
+  background: linear-gradient(135deg, #1e3a5f, #3b82c4, #6cb4ee);
+  color: white;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.app-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.app-subtitle {
+  font-size: 0.95rem;
+  opacity: 0.85;
+  margin-top: 0.25rem;
+  font-weight: 400;
+}
+
+.app-main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+/* Error */
+.error-banner {
+  background: #fef2f2;
+  color: #b91c1c;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 1px solid #fecaca;
+}
+
+/* Loading */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+}
+
+.loading-card {
+  background: white;
+  border-radius: 16px;
+  padding: 3rem;
+  text-align: center;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  max-width: 480px;
+  width: 100%;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #3b82c4;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1.5rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.loading-hint {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+}
+
+.progress-bar-container {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82c4, #6cb4ee);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-pct {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #3b82c4;
+  margin-top: 0.75rem;
+}
+
+.progress-status {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-top: 0.5rem;
+}
+
+/* Filters Bar */
+.filters-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.filter-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.filter-group select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  background: white;
+  cursor: pointer;
+}
+
+.sort-toggles {
+  display: flex;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #d1d5db;
+}
+
+.sort-btn {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  border: none;
+  background: white;
+  cursor: pointer;
+  color: #64748b;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.sort-btn:not(:last-child) {
+  border-right: 1px solid #d1d5db;
+}
+
+.sort-btn.active {
+  background: #3b82c4;
+  color: white;
+}
+
+.results-count {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-left: auto;
+  align-self: flex-end;
+  padding-bottom: 0.5rem;
+}
+
+/* Cards Grid */
+.cards-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+/* Resort Card */
+.resort-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  border: 1px solid #e8ecf1;
+}
+
+.resort-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.rank-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+  background: #f1f5f9;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.rank-badge.gold {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  color: white;
+}
+
+.rank-badge.silver {
+  background: linear-gradient(135deg, #9ca3af, #d1d5db);
+  color: white;
+}
+
+.rank-badge.bronze {
+  background: linear-gradient(135deg, #b45309, #d97706);
+  color: white;
+}
+
+.card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.resort-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.resort-location {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.region-tag {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #e8f4fd;
+  color: #2563a8;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+.card-stats {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+}
+
+.stat-value {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.snowfall-value {
+  color: #3b82c4;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.consistency-bar-container {
+  width: 60px;
+  height: 5px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.consistency-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  border-radius: 3px;
+}
+
+.card-footer {
+  margin-top: 0.35rem;
+}
+
+.composite-score {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6366f1;
+}
+
+/* Resort Detail */
+.resort-detail {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+  transition: background 0.15s;
+}
+
+.back-btn:hover {
+  background: #f8fafc;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.detail-rank {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.5rem;
+  background: linear-gradient(135deg, #3b82c4, #6cb4ee);
+  color: white;
+  flex-shrink: 0;
+}
+
+.detail-name {
+  font-size: 1.75rem;
+  font-weight: 800;
+}
+
+.detail-location {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.detail-elevation {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.detail-score {
+  margin-left: auto;
+  text-align: center;
+}
+
+.score-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #6366f1;
+  line-height: 1;
+  display: block;
+}
+
+.score-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.metric-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.metric-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  display: block;
+}
+
+.metric-value.best {
+  color: #22c55e;
+}
+
+.metric-value.worst {
+  color: #ef4444;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+/* Chart */
+.chart-section {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.chart-section h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.bar-chart {
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.chart-svg {
+  display: block;
+}
+
+.chart-bar {
+  fill: #3b82c4;
+  transition: fill 0.15s;
+}
+
+.chart-bar:hover {
+  fill: #2563a8;
+}
+
+.bar-value {
+  font-size: 9px;
+  fill: #64748b;
+  font-weight: 600;
+}
+
+.bar-label {
+  font-size: 9px;
+  fill: #94a3b8;
+}
+
+/* Nearby */
+.nearby-section {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.nearby-section h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.nearby-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.5rem;
+}
+
+.nearby-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.nearby-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.nearby-distance {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+/* Yearly Table */
+.yearly-section {
+  margin-bottom: 2rem;
+}
+
+.toggle-table {
+  padding: 0.6rem 1.25rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #475569;
+  margin-bottom: 1rem;
+  transition: background 0.15s;
+}
+
+.toggle-table:hover {
+  background: #f8fafc;
+}
+
+.yearly-table {
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border-collapse: collapse;
+}
+
+.yearly-table th {
+  background: #f1f5f9;
+  padding: 0.6rem 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.yearly-table td {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.yearly-table tr:hover td {
+  background: #fafbfc;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .app-title {
+    font-size: 1.75rem;
+  }
+
+  .app-main {
+    padding: 1rem;
+  }
+
+  .filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .results-count {
+    margin-left: 0;
+  }
+
+  .resort-card {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .card-stats {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .detail-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .detail-score {
+    margin-left: 0;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .sort-toggles {
+    width: 100%;
+  }
+
+  .sort-btn {
+    flex: 1;
+  }
+}
