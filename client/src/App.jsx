@@ -110,6 +110,7 @@ function App() {
       const data = await res.json();
       setSelectedResort(data);
       setSelectedResortId(resortId);
+      window.history.pushState({ resortId }, '', `#${resortId}`);
     } catch (err) {
       setError('Failed to load resort details');
     }
@@ -118,7 +119,17 @@ function App() {
   const handleBack = () => {
     setSelectedResortId(null);
     setSelectedResort(null);
+    window.history.pushState(null, '', '/');
   };
+
+  useEffect(() => {
+    const onPopState = () => {
+      setSelectedResortId(null);
+      setSelectedResort(null);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
 
   const weekLabel = getWeekLabel(week);
 

@@ -105,6 +105,14 @@ function ResortDetail({ resort, onBack, week = '02-07' }) {
     <div className="resort-detail">
       <button className="back-btn" onClick={onBack}>Back to Rankings</button>
 
+      <div className="resort-hero">
+        <img
+          src={`/images/resorts/${resort.id}.jpg`}
+          alt={`${resort.name} scenic view`}
+          onError={(e) => { e.target.src = '/images/resorts/default.jpg'; }}
+        />
+      </div>
+
       <div className="detail-header">
         <div className="detail-rank">#{resort.rank}</div>
         <div>
