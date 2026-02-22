@@ -1,7 +1,9 @@
 class WeatherService {
-  constructor(databaseService) {
+  constructor(databaseService, { requestDelay = 500, retryDelay = 30000 } = {}) {
     this.db = databaseService;
     this.inMemoryCache = {};
+    this.requestDelay = requestDelay;
+    this.retryDelay = retryDelay;
   }
 
   async fetchBatchWeather(resorts, year, startMM, startDD, endMM, endDD) {
@@ -98,13 +100,32 @@ class WeatherService {
               await this.db.setWeatherCache(resortId, year, weekStart, data);
             }
           } catch (err) {
-            console.error(`Error fetching batch for year ${year}:`, err.message);
-            for (const resort of uncached) {
-              allData[resort.id][year] = null;
+            if (err.message.includes('429')) {
+              // Rate limited — wait and retry once
+              console.warn(`Rate limited on year ${year} batch, retrying in ${this.retryDelay / 1000}s...`);
+              await new Promise(resolve => setTimeout(resolve, this.retryDelay));
+              try {
+                const batchResults = await this.fetchBatchWeather(uncached, year, startMM, startDD, endMM, endDD);
+                for (const [resortId, data] of Object.entries(batchResults)) {
+                  allData[resortId][year] = data;
+                  this.inMemoryCache[`${resortId}_${year}_${weekStart}`] = data;
+                  await this.db.setWeatherCache(resortId, year, weekStart, data);
+                }
+              } catch (retryErr) {
+                console.error(`Retry failed for year ${year}:`, retryErr.message);
+                for (const resort of uncached) {
+                  allData[resort.id][year] = null;
+                }
+              }
+            } else {
+              console.error(`Error fetching batch for year ${year}:`, err.message);
+              for (const resort of uncached) {
+                allData[resort.id][year] = null;
+              }
             }
           }
 
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, this.requestDelay));
         } else {
           if (onProgress) {
             onProgress(currentStep, totalSteps, `Year ${year} loaded from cache`);

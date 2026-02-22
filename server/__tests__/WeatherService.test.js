@@ -115,7 +115,7 @@ describe('WeatherService.fetchAllHistoricalData', () => {
 
   beforeEach(() => {
     mockDb = makeMockDb();
-    ws = new WeatherService(mockDb);
+    ws = new WeatherService(mockDb, { requestDelay: 0, retryDelay: 0 });
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => makeApiResponse(1)
