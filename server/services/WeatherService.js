@@ -11,7 +11,7 @@ class WeatherService {
     const endYear = parseInt(endMM) < parseInt(startMM) ? year + 1 : year;
     const endDate = `${endYear}-${endMM}-${endDD}`;
 
-    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lats}&longitude=${lngs}&start_date=${startDate}&end_date=${endDate}&daily=snowfall_sum,precipitation_sum,temperature_2m_max,temperature_2m_min&timezone=America/Denver`;
+    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lats}&longitude=${lngs}&start_date=${startDate}&end_date=${endDate}&daily=snowfall_sum,precipitation_sum,temperature_2m_max,temperature_2m_min&timezone=auto`;
 
     const response = await fetch(url);
     if (!response.ok) {

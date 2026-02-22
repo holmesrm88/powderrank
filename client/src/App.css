@@ -185,6 +185,62 @@ body {
   color: white;
 }
 
+/* Pass Filter Buttons */
+.pass-toggles {
+  display: flex;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #d1d5db;
+}
+
+.pass-btn {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  border: none;
+  background: white;
+  cursor: pointer;
+  color: #64748b;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.pass-btn:not(:last-child) {
+  border-right: 1px solid #d1d5db;
+}
+
+.ikon-btn.active {
+  background: #1b3d78;
+  color: white;
+}
+
+.epic-btn.active {
+  background: #8b0000;
+  color: white;
+}
+
+/* Pass Badge Pills */
+.pass-tag {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  margin-left: 0.25rem;
+}
+
+.ikon-tag {
+  background: #dbeafe;
+  color: #1b3d78;
+}
+
+.epic-tag {
+  background: #fee2e2;
+  color: #8b0000;
+}
+
 .results-count {
   font-size: 0.85rem;
   color: #94a3b8;
@@ -774,6 +830,14 @@ body {
   }
 
   .sort-btn {
+    flex: 1;
+  }
+
+  .pass-toggles {
+    width: 100%;
+  }
+
+  .pass-btn {
     flex: 1;
   }
 

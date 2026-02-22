@@ -138,7 +138,7 @@ function App() {
       <header className="app-header">
         <div className="header-content">
           <h1 className="app-title">PowderRank</h1>
-          <p className="app-subtitle">Historical {weekLabel} Snowfall Rankings for North American Ski Resorts</p>
+          <p className="app-subtitle">Historical {weekLabel} Snowfall Rankings for Ski Resorts Worldwide</p>
         </div>
       </header>
       <main className="app-main">

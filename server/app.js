@@ -11,6 +11,7 @@ const { generateWeeks, parseWeekDates } = require('./utils/weeks');
 
 const app = express();
 
+app.disable('x-powered-by');
 app.use(cors());
 app.use(express.json());
 
@@ -79,6 +80,8 @@ async function startFetch(weekStart) {
         region: resort.region,
         baseElevation: resort.baseElevation,
         summitElevation: resort.summitElevation,
+        ikonPass: resort.ikonPass,
+        epicPass: resort.epicPass,
         nearbyResorts: resort.nearbyResorts
       }, resort.yearlyData);
     }
@@ -140,7 +143,9 @@ app.get('/api/rankings', (req, res) => {
       compositeScore: r.compositeScore,
       normalizedSnowfall: r.normalizedSnowfall,
       bestYear: r.bestYear,
-      worstYear: r.worstYear
+      worstYear: r.worstYear,
+      ikonPass: r.ikonPass,
+      epicPass: r.epicPass
     }));
     return res.json({ rankings: summary, loading: false });
   }

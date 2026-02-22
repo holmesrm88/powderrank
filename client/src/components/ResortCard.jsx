@@ -11,6 +11,8 @@ function ResortCard({ resort, displayRank, onClick }) {
           <h3 className="resort-name">{resort.name}</h3>
           <span className="resort-location">{resort.city}, {resort.state}</span>
           <span className="region-tag">{resort.region}</span>
+          {resort.ikonPass && <span className="pass-tag ikon-tag">Ikon</span>}
+          {resort.epicPass && <span className="pass-tag epic-tag">Epic</span>}
         </div>
         <div className="card-stats">
           <div className="stat">
