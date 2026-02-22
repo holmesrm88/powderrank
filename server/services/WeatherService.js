@@ -1,5 +1,5 @@
 class WeatherService {
-  constructor(databaseService, { requestDelay = 500, retryDelay = 30000 } = {}) {
+  constructor(databaseService, { requestDelay = 1200, retryDelay = 60000 } = {}) {
     this.db = databaseService;
     this.inMemoryCache = {};
     this.requestDelay = requestDelay;
@@ -60,12 +60,13 @@ class WeatherService {
     const allData = {};
     for (const r of allResorts) allData[r.id] = {};
 
-    const totalSteps = years.length * Math.ceil(allResorts.length / 10);
+    const BATCH_SIZE = 5;
+    const totalSteps = years.length * Math.ceil(allResorts.length / BATCH_SIZE);
     let currentStep = 0;
 
     for (const year of years) {
-      for (let i = 0; i < allResorts.length; i += 10) {
-        const batch = allResorts.slice(i, i + 10);
+      for (let i = 0; i < allResorts.length; i += BATCH_SIZE) {
+        const batch = allResorts.slice(i, i + BATCH_SIZE);
         currentStep++;
 
         const uncached = [];
@@ -89,7 +90,7 @@ class WeatherService {
 
         if (uncached.length > 0) {
           if (onProgress) {
-            onProgress(currentStep, totalSteps, `Fetching ${year} data (batch ${Math.ceil((i + 1) / 10)}/${Math.ceil(allResorts.length / 10)})`);
+            onProgress(currentStep, totalSteps, `Fetching ${year} data (batch ${Math.ceil((i + 1) / BATCH_SIZE)}/${Math.ceil(allResorts.length / BATCH_SIZE)})`);
           }
 
           try {
