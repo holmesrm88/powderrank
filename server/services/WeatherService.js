@@ -1,5 +1,5 @@
 class WeatherService {
-  constructor(databaseService, { requestDelay = 1200, retryDelay = 60000 } = {}) {
+  constructor(databaseService, { requestDelay = 1200, retryDelay = 3600000 } = {}) {
     this.db = databaseService;
     this.inMemoryCache = {};
     this.requestDelay = requestDelay;
@@ -93,35 +93,26 @@ class WeatherService {
             onProgress(currentStep, totalSteps, `Fetching ${year} data (batch ${Math.ceil((i + 1) / BATCH_SIZE)}/${Math.ceil(allResorts.length / BATCH_SIZE)})`);
           }
 
-          try {
-            const batchResults = await this.fetchBatchWeather(uncached, year, startMM, startDD, endMM, endDD);
-            for (const [resortId, data] of Object.entries(batchResults)) {
-              allData[resortId][year] = data;
-              this.inMemoryCache[`${resortId}_${year}_${weekStart}`] = data;
-              await this.db.setWeatherCache(resortId, year, weekStart, data);
-            }
-          } catch (err) {
-            if (err.message.includes('429')) {
-              // Rate limited — wait and retry once
-              console.warn(`Rate limited on year ${year} batch, retrying in ${this.retryDelay / 1000}s...`);
-              await new Promise(resolve => setTimeout(resolve, this.retryDelay));
-              try {
-                const batchResults = await this.fetchBatchWeather(uncached, year, startMM, startDD, endMM, endDD);
-                for (const [resortId, data] of Object.entries(batchResults)) {
-                  allData[resortId][year] = data;
-                  this.inMemoryCache[`${resortId}_${year}_${weekStart}`] = data;
-                  await this.db.setWeatherCache(resortId, year, weekStart, data);
-                }
-              } catch (retryErr) {
-                console.error(`Retry failed for year ${year}:`, retryErr.message);
+          let fetched = false;
+          while (!fetched) {
+            try {
+              const batchResults = await this.fetchBatchWeather(uncached, year, startMM, startDD, endMM, endDD);
+              for (const [resortId, data] of Object.entries(batchResults)) {
+                allData[resortId][year] = data;
+                this.inMemoryCache[`${resortId}_${year}_${weekStart}`] = data;
+                await this.db.setWeatherCache(resortId, year, weekStart, data);
+              }
+              fetched = true;
+            } catch (err) {
+              if (err.message.includes('429')) {
+                console.warn(`Rate limited on year ${year}. Pausing all requests for 1 hour...`);
+                await new Promise(resolve => setTimeout(resolve, this.retryDelay));
+              } else {
+                console.error(`Error fetching batch for year ${year}:`, err.message);
                 for (const resort of uncached) {
                   allData[resort.id][year] = null;
                 }
-              }
-            } else {
-              console.error(`Error fetching batch for year ${year}:`, err.message);
-              for (const resort of uncached) {
-                allData[resort.id][year] = null;
+                fetched = true; // skip this batch on non-429 errors
               }
             }
           }
